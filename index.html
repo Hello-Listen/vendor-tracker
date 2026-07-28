@@ -732,7 +732,7 @@ function renderChart() {
   });
 
   // -- legend --
-  const legendY = H - 10;
+  const legendY = H - 14;
   const legendItems = [
     { color: '#2c3e50', label: '资产人数' },
     { color: '#e74c3c', label: '无效' },
@@ -742,17 +742,17 @@ function renderChart() {
   let lx = pad.left;
   ctx.font = '11px sans-serif';
   legendItems.forEach(item => {
-    const labelW = ctx.measureText(item.label).width + 18;
+    const labelW = ctx.measureText(item.label).width + 30;
     const y = legendY;
     if (item.line) {
       ctx.strokeStyle = item.color; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(lx, y); ctx.lineTo(lx + 12, y); ctx.stroke();
-      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(lx + 6, y, 3, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = item.color; ctx.beginPath(); ctx.arc(lx + 6, y, 2, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#6b7c93'; ctx.fillText(item.label, lx + 16, y + 4);
+      ctx.beginPath(); ctx.moveTo(lx, y); ctx.lineTo(lx + 14, y); ctx.stroke();
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(lx + 7, y, 3.5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = item.color; ctx.beginPath(); ctx.arc(lx + 7, y, 2, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#6b7c93'; ctx.fillText(item.label, lx + 20, y + 4);
     } else {
       ctx.fillStyle = item.color;
-      roundRect(ctx, lx, y - 5, 10, 10, 2); ctx.fill();
+      roundRect(ctx, lx, y - 4, 8, 8, 2); ctx.fill();
       ctx.fillStyle = '#6b7c93'; ctx.fillText(item.label, lx + 14, y + 4);
     }
     lx += labelW;
