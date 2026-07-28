@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>联岸供应商 · 罗马小镇 · 每日统计</title>
+<title>供应商 · 地图项目 · 每日统计</title>
 <!-- 自包含图表引擎，零外部依赖 -->
 <style>
 /* ===== Reset & Variables ===== */
@@ -393,15 +393,15 @@ body {
   <div style="display:flex;align-items:center;">
     <div class="project-badge">
       <span class="dot"></span>
-      三角洲行动
+      项目
     </div>
     <div class="breadcrumb">
-      <span>/</span> 罗马小镇
+      <span>/</span> 地图项目
       <span>/</span> <span class="current">白盒阶段</span>
     </div>
   </div>
   <div class="nav-right">
-    联岸供应商 · 负责人：巴舞
+    供应商 · 负责人：巴舞
   </div>
 </nav>
 
@@ -429,7 +429,7 @@ body {
       <thead>
         <tr>
           <th>日期</th>
-          <th>罗马人数</th>
+          <th>项目人数</th>
           <th>资产</th>
           <th>正常</th>
           <th style="color:#dc2626;">无效</th>
@@ -451,7 +451,7 @@ body {
   </div>
 </div>
 
-<div class="footer">数据来源：联岸每日截图汇报 · 由小秘自动归档</div>
+<div class="footer">数据来源：供应商每日截图汇报 · 由小秘自动归档</div>
 
 <script>
 // ====== DATA STORE ======
@@ -504,7 +504,7 @@ function renderCards() {
     <div class="card">
       <div class="card-label">最新日期</div>
       <div class="card-value" style="font-size:20px;">${latest.date.slice(5)}</div>
-      <div class="card-sub">罗马 ${latest.total} 人 / 资产 ${latest.asset} 人</div>
+      <div class="card-sub">项目 ${latest.total} 人 / 资产 ${latest.asset} 人</div>
     </div>
     <div class="card">
       <div class="card-label">昨日无效</div>
