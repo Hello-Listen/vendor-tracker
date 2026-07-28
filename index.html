@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>联岸供应商 · 罗马小镇 · 每日统计</title>
+<!-- 自包含图表引擎，零外部依赖 -->
+<style>
+/* ===== Reset & Variables ===== */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #f8f9fb;
+  --surface: #fff;
+  --border: #e8ecf1;
+  --text: #2c3e50;
+  --text-secondary: #6b7c93;
+  --text-muted: #a0aec0;
+  --red: #e74c3c;
+  --red-bg: #fef2f2;
+  --blue: #3b82f6;
+  --blue-bg: #eff6ff;
+  --green: #27ae60;
+  --green-bg: #ecfdf5;
+  --orange: #f59e0b;
+  --radius: 8px;
+  --radius-sm: 4px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03);
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ===== Top Nav ===== */
+.top-nav {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.breadcrumb span { color: var(--text-muted); }
+.breadcrumb .current { color: var(--text); font-weight: 600; }
+.project-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  margin-right: 12px;
+}
+.project-badge .dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+}
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* ===== Container ===== */
+.container {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 20px 16px 40px;
+}
+
+/* ===== Section ===== */
+.section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  margin-bottom: 16px;
+}
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* ===== Summary Cards ===== */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+}
+.card .card-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+  letter-spacing: 0.02em;
+}
+.card .card-value {
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.card .card-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+.card .card-value.red { color: var(--red); }
+.card .card-value.blue { color: var(--blue); }
+.card .card-value.green { color: var(--green); }
+
+@media (max-width: 760px) {
+  .cards { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ===== Chart ===== */
+.chart-wrap { position: relative; }
+.chart-wrap canvas { width: 100% !important; }
+
+/* ===== Table ===== */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.data-table th {
+  text-align: center;
+  padding: 10px 6px;
+  font-weight: 500;
+  font-size: 12px;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border);
+  background: #fafbfc;
+}
+.data-table td {
+  text-align: center;
+  padding: 10px 6px;
+  border-bottom: 1px solid #f1f3f6;
+}
+.data-table tbody tr:hover td {
+  background: #f8f9fb;
+}
+.data-table td.latest-row {
+  border-left: 3px solid var(--green);
+  background: #f9fdfb;
+}
+.data-table td.latest-row:hover { background: #f0f9f4; }
+.data-table .val-red { color: var(--red); font-weight: 600; }
+.data-table .val-blue { color: var(--blue); font-weight: 600; }
+.data-table .val-rest { color: var(--text-muted); font-style: italic; }
+.data-table .rate-badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 500;
+}
+.rate-badge.high { background: #fef2f2; color: #dc2626; }
+.rate-badge.mid { background: #fffbeb; color: #d97706; }
+.rate-badge.low { background: #ecfdf5; color: #059669; }
+.latest-dot {
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+/* ===== Names Section ===== */
+.name-summary { margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px dashed var(--border); }
+.name-summary-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+.name-summary-chart { max-height: 340px; overflow: hidden; }
+.name-summary-chart canvas { display: block; width: 100%; }
+
+.name-date-card {
+  border-left: 2px solid var(--border);
+  padding: 8px 0 8px 14px;
+  margin-bottom: 12px;
+  transition: border-color 0.15s;
+}
+.name-date-card:hover { border-left-color: #cbd5e0; }
+.name-date-card:last-child { margin-bottom: 0; }
+.name-date-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+.name-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-items: center;
+  margin-bottom: 3px;
+}
+.name-tags-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  min-width: 56px;
+  flex-shrink: 0;
+}
+.name-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.6;
+}
+.name-tag.red {
+  background: var(--red-bg);
+  color: #b91c1c;
+}
+.name-tag.blue {
+  background: var(--blue-bg);
+  color: #1d4ed8;
+}
+.name-tag.empty {
+  font-size: 11px;
+  color: var(--text-muted);
+  background: none;
+}
+
+/* ===== Form ===== */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.form-grid label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  display: block;
+  margin-bottom: 4px;
+}
+.form-grid input,
+.form-grid select,
+.form-grid textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--text);
+  background: #fafbfc;
+  transition: border-color 0.15s;
+}
+.form-grid input:focus,
+.form-grid select:focus,
+.form-grid textarea:focus {
+  outline: none;
+  border-color: var(--blue);
+  background: #fff;
+}
+.form-grid textarea { resize: vertical; min-height: 32px; }
+
+.form-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* ===== Buttons ===== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 7px 16px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+  line-height: 1.4;
+}
+.btn-primary {
+  background: var(--text);
+  color: #fff;
+}
+.btn-primary:hover { background: #1a2533; }
+.btn-outline {
+  background: var(--surface);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+.btn-outline:hover { background: #f8f9fb; color: var(--text); }
+.btn-danger {
+  background: var(--surface);
+  color: var(--red);
+  border: 1px solid #fecaca;
+}
+.btn-danger:hover { background: var(--red-bg); }
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  padding: 5px 12px;
+  font-size: 12px;
+}
+.btn-ghost:hover { background: #f8f9fb; color: var(--text); }
+
+/* ===== Modal ===== */
+.modal-overlay {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(15, 23, 42, 0.3);
+  backdrop-filter: blur(2px);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.15s ease;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.modal {
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 24px;
+  width: 340px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.12);
+  animation: slideUp 0.2s ease;
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.modal h4 { font-size: 15px; font-weight: 600; margin-bottom: 14px; color: var(--text); }
+.modal input {
+  width: 100%; padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 14px; margin-bottom: 12px;
+  font-family: inherit;
+}
+.modal input:focus { outline: none; border-color: var(--blue); }
+.modal .modal-btns { display: flex; gap: 8px; justify-content: flex-end; }
+.modal .err { font-size: 12px; color: var(--red); margin-bottom: 8px; }
+
+/* ===== Edit Mode ===== */
+.editor-only { display: none; }
+.edit-mode .editor-only { display: block; }
+.edit-mode .editor-inline { display: inline-flex; }
+
+/* ===== Footer ===== */
+.footer {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 11px;
+  padding: 12px 16px 24px;
+}
+</style>
+</head>
+<body>
+
+<!-- Top Navigation -->
+<nav class="top-nav">
+  <div style="display:flex;align-items:center;">
+    <div class="project-badge">
+      <span class="dot"></span>
+      三角洲行动
+    </div>
+    <div class="breadcrumb">
+      <span>/</span> 罗马小镇
+      <span>/</span> <span class="current">白盒阶段</span>
+    </div>
+  </div>
+  <div class="nav-right">
+    联岸供应商 · 负责人：巴舞
+  </div>
+</nav>
+
+<div class="container">
+
+  <!-- Summary Cards -->
+  <div class="cards" id="cards"></div>
+
+  <!-- Chart -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">每日趋势</span>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="mainChart" height="300"></canvas>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">数据明细</span>
+    </div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>日期</th>
+          <th>罗马人数</th>
+          <th>资产</th>
+          <th>正常</th>
+          <th style="color:#dc2626;">无效</th>
+          <th style="color:#3b82f6;">50%</th>
+          <th>请假</th>
+          <th>无效率</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+
+  <!-- Invalid Names -->
+  <div class="section" id="namesBox">
+    <div class="section-header">
+      <span class="section-title">每日无效 / 50% 人员名单</span>
+    </div>
+    <div id="namesContent"></div>
+  </div>
+</div>
+
+<div class="footer">数据来源：联岸每日截图汇报 · 由小秘自动归档</div>
+
+<script>
+// ====== DATA STORE ======
+let data = [];
+
+const defaultData = [
+  { date:'2026-07-20', total:29, asset:28, normal:16, invalid:12, invalidNames:['潘斯欣','陈咏恩','张思雨','杨昊烨','李剑','袁振荣','虞南山','朱良','王凯文','马宇飞','杨亮亮','李铭宇'], half:0, halfNames:[], leave:2, type:'working' },
+  { date:'2026-07-21', total:29, asset:28, normal:18, invalid:10, invalidNames:['潘斯欣','陈咏恩','张思雨','杨昊烨','袁振荣','虞南山','朱良','马宇飞','杨亮亮','李铭宇'], half:0, halfNames:[], leave:2, type:'working' },
+  { date:'2026-07-22', total:28, asset:20, normal:5,  invalid:9,  invalidNames:['潘斯欣','肖军','杨昊烨','李剑','王凯文','马宇飞','冯诗樱','杨亮亮','李铭宇'], half:6, halfNames:['田净祎','陈馥妮','王琪','陈咏恩','李石钊','徐镇创'], leave:2, type:'working' },
+  { date:'2026-07-23', total:28, asset:21, normal:20, invalid:1,  invalidNames:['王琪'], half:0, halfNames:[], leave:1, type:'working' },
+  { date:'2026-07-24', total:28, asset:21, normal:16, invalid:4,  invalidNames:['陈馥妮','潘斯欣','陈咏恩','李剑'], half:1, halfNames:['段杭茜'], leave:1, type:'working' },
+  { date:'2026-07-25', total:null, asset:null, normal:null, invalid:null, invalidNames:[], half:null, halfNames:[], leave:null, type:'rest' },
+  { date:'2026-07-26', total:null, asset:null, normal:null, invalid:null, invalidNames:[], half:null, halfNames:[], leave:null, type:'rest' },
+  { date:'2026-07-27', total:27, asset:21, normal:15, invalid:5,  invalidNames:['陈馥妮','肖军','张思雨','杨昊烨','段杭茜'], half:1, halfNames:['陈咏恩'], leave:0, type:'working' },
+];
+
+function loadData() {
+  data = JSON.parse(JSON.stringify(defaultData));
+}
+
+// ====== RENDER ======
+function renderAll() {
+  renderCards();
+  renderChart();
+  renderTable();
+  renderNames();
+}
+
+function getWorkingData() {
+  return data.filter(d => d.type === 'working' && d.asset != null);
+}
+
+function renderCards() {
+  const wd = getWorkingData();
+  if (wd.length === 0) {
+    document.getElementById('cards').innerHTML = '<div style="color:var(--text-muted);grid-column:1/-1;text-align:center;padding:20px;">暂无数据</div>';
+    return;
+  }
+  const latest = wd[wd.length - 1];
+  let totalAsset = 0, totalInvalid = 0, totalHalf = 0, totalLeave = 0;
+  wd.forEach(d => {
+    totalAsset += (d.asset||0);
+    totalInvalid += (d.invalid||0);
+    totalHalf += (d.half||0);
+    totalLeave += (d.leave||0);
+  });
+  const inefficiencyRate = totalAsset > 0 ? ((totalInvalid + totalHalf * 0.5) / totalAsset * 100).toFixed(1) : '0';
+
+  document.getElementById('cards').innerHTML = `
+    <div class="card">
+      <div class="card-label">最新日期</div>
+      <div class="card-value" style="font-size:20px;">${latest.date.slice(5)}</div>
+      <div class="card-sub">罗马 ${latest.total} 人 / 资产 ${latest.asset} 人</div>
+    </div>
+    <div class="card">
+      <div class="card-label">昨日无效</div>
+      <div class="card-value red">${latest.invalid ?? '-'}</div>
+      <div class="card-sub">无效率 ${latest.asset ? (latest.invalid/latest.asset*100).toFixed(1) : '-'}%</div>
+    </div>
+    <div class="card">
+      <div class="card-label">累计无效（${wd.length} 天）</div>
+      <div class="card-value blue">${totalInvalid}</div>
+      <div class="card-sub">综合无效率 ${inefficiencyRate}%</div>
+    </div>
+    <div class="card">
+      <div class="card-label">50% 生产 / 请假</div>
+      <div class="card-value green">${totalHalf}</div>
+      <div class="card-sub">请假累计 ${totalLeave} 人次</div>
+    </div>
+  `;
+}
+
+function renderTable() {
+  const rows = data.map(d => {
+    if (d.type === 'rest') {
+      return `<tr>
+        <td>${d.date.slice(5)}</td>
+        <td colspan="7" class="val-rest">休息日</td>
+      </tr>`;
+    }
+    const rawRate = d.asset ? (d.invalid / d.asset * 100) : null;
+    const rate = rawRate !== null ? rawRate.toFixed(1) : '-';
+    let rateClass = '';
+    if (rawRate !== null) {
+      if (rawRate >= 30) rateClass = 'high';
+      else if (rawRate >= 10) rateClass = 'mid';
+      else rateClass = 'low';
+    }
+    const isLatest = d.date === data.filter(e => e.type === 'working').pop()?.date;
+    return `<tr>
+      <td>${isLatest ? '<span class="latest-dot"></span>' : ''}${d.date.slice(5)}</td>
+      <td>${d.total ?? '?'}</td>
+      <td>${d.asset ?? '?'}</td>
+      <td>${d.normal ?? '?'}</td>
+      <td class="val-red">${d.invalid ?? '-'}</td>
+      <td class="val-blue">${d.half ?? '-'}</td>
+      <td>${d.leave ?? '-'}</td>
+      <td>${rate === '-' ? '-' : `<span class="rate-badge ${rateClass}">${rate}%</span>`}</td>
+    </tr>`;
+  });
+  document.getElementById('tableBody').innerHTML = rows.join('');
+}
+
+function renderNames() {
+  const wd = data.filter(d => d.type === 'working');
+  const invalidCount = {};
+  const halfCount = {};
+  const totalWorkingDays = wd.length;
+  wd.forEach(d => {
+    (d.invalidNames || []).forEach(n => { invalidCount[n] = (invalidCount[n] || 0) + 1; });
+    (d.halfNames || []).forEach(n => { halfCount[n] = (halfCount[n] || 0) + 1; });
+  });
+  const sortedInvalid = Object.entries(invalidCount).sort((a,b) => a[1] - b[1]);
+  const sortedHalf = Object.entries(halfCount).sort((a,b) => a[1] - b[1]);
+
+  let summaryHtml = '';
+  if (sortedInvalid.length + sortedHalf.length > 0) {
+    summaryHtml = '<div class="name-summary"><div class="name-summary-title">人员汇总（统计期共 ' + totalWorkingDays + ' 个工作日）</div>';
+    if (sortedInvalid.length > 0) {
+      summaryHtml += '<div class="name-summary-chart"><canvas id="invalidChart" height="' + Math.max(120, sortedInvalid.length * 26) + '"></canvas></div>';
+    }
+    if (sortedHalf.length > 0) {
+      summaryHtml += '<div class="name-summary-chart" style="margin-top:14px;"><canvas id="halfChart" height="' + Math.max(80, sortedHalf.length * 26) + '"></canvas></div>';
+    }
+    summaryHtml += '</div>';
+  }
+
+  const groups = wd.map(d => ({
+    date: d.date,
+    invalidNames: d.invalidNames || [],
+    halfNames: d.halfNames || [],
+  })).reverse();
+
+  const dailyHtml = groups.map(g => `
+    <div class="name-date-card">
+      <div class="name-date-label">${g.date.slice(5)}</div>
+      <div class="name-tags">
+        <span class="name-tags-label">无效 ${g.invalidNames.length}人</span>
+        ${g.invalidNames.length > 0
+          ? g.invalidNames.map(n => `<span class="name-tag red">${n}</span>`).join('')
+          : '<span class="name-tag empty">无</span>'}
+      </div>
+      <div class="name-tags">
+        <span class="name-tags-label">50% ${g.halfNames.length}人</span>
+        ${g.halfNames.length > 0
+          ? g.halfNames.map(n => `<span class="name-tag blue">${n}</span>`).join('')
+          : '<span class="name-tag empty">无</span>'}
+      </div>
+    </div>
+  `).join('');
+
+  document.getElementById('namesContent').innerHTML = summaryHtml + dailyHtml;
+
+  setTimeout(() => {
+    if (sortedInvalid.length > 0) drawHBarChart('invalidChart', sortedInvalid, totalWorkingDays, v => v >= 3 ? '#dc2626' : '#fca5a5');
+    if (sortedHalf.length > 0) drawHBarChart('halfChart', sortedHalf, totalWorkingDays, v => '#93c5fd');
+  }, 50);
+}
+
+// ====== SELF-CONTAINED CANVAS CHART ENGINE ======
+function renderChart() {
+  const wd = getWorkingData();
+  if (wd.length === 0) return;
+
+  const canvas = document.getElementById('mainChart');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const W = rect.width;
+  const H = 300;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const labels = wd.map(d => d.date.slice(5));
+  const assets = wd.map(d => d.asset);
+  const invalids = wd.map(d => d.invalid);
+  const halfs = wd.map(d => d.half);
+  const rates = wd.map(d => d.asset ? (d.invalid + d.half * 0.5) / d.asset * 100 : null);
+
+  const N = labels.length;
+  const pad = { top: 16, right: 50, bottom: 70, left: 44 };
+  const cw = W - pad.left - pad.right;
+  const ch = H - pad.top - pad.bottom;
+
+  const yMax = Math.max(10, ...assets) + 2;
+
+  // helper: X position for category i
+  function cx(i) { return pad.left + cw * (i + 0.5) / N; }
+
+  // helper: Y position for value v on left axis
+  function cyL(v) { return pad.top + ch * (1 - v / yMax); }
+
+  // helper: Y position for value v on right axis (0-100)
+  function cyR(v) { return pad.top + ch * (1 - v / 100); }
+
+  // clear
+  ctx.clearRect(0, 0, W, H);
+
+  // grid lines (left axis)
+  ctx.strokeStyle = '#f1f3f6';
+  ctx.lineWidth = 1;
+  for (let v = 0; v <= yMax; v += Math.ceil(yMax / 5)) {
+    const y = cyL(v);
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W - pad.right, y); ctx.stroke();
+    ctx.fillStyle = '#6b7c93'; ctx.font = '10px sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText(v, pad.left - 6, y + 3);
+  }
+
+  // left axis label
+  ctx.fillStyle = '#6b7c93'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('人数', pad.left - 20, pad.top + ch / 2);
+
+  // right axis ticks
+  ctx.fillStyle = '#6b7c93'; ctx.font = '10px sans-serif'; ctx.textAlign = 'left';
+  for (let v = 0; v <= 100; v += 25) {
+    const y = cyR(v);
+    ctx.fillText(v + '%', W - pad.right + 6, y + 3);
+  }
+  ctx.fillText('无效率', W - pad.right + 20, pad.top - 6);
+
+  // X labels
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#6b7c93'; ctx.font = '11px sans-serif';
+  for (let i = 0; i < N; i++) {
+    ctx.fillText(labels[i], cx(i), H - 38);
+  }
+
+  // -- draw grouped bars --
+  const groupW = cw / N * 0.7;
+  const barW = groupW / 3;
+  const barSets = [
+    { data: assets, color: '#2c3e50', label: '资产人数' },
+    { data: invalids, color: '#e74c3c', label: '无效' },
+    { data: halfs, color: '#3b82f6', label: '50% 生产' },
+  ];
+
+  // store bar rects for tooltip
+  const barRects = [];
+  barSets.forEach((set, si) => {
+    set.data.forEach((v, i) => {
+      if (v === null || v === undefined) return;
+      const bx = cx(i) - groupW / 2 + si * barW;
+      const by = cyL(v);
+      const bw = barW - 2;
+      const bh = pad.top + ch - by;
+      const r = Math.min(3, bw / 2);
+      ctx.fillStyle = set.color;
+      roundRect(ctx, bx, by, bw, bh, r);
+      ctx.fill();
+      barRects.push({ x: bx, y: by, w: bw, h: bh, set, i, v });
+    });
+  });
+
+  // -- draw rate line --
+  ctx.strokeStyle = '#f59e0b';
+  ctx.lineWidth = 2;
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  let firstPoint = true;
+  const linePts = [];
+  for (let i = 0; i < N; i++) {
+    if (rates[i] === null) continue;
+    const px = cx(i);
+    const py = cyR(rates[i]);
+    linePts.push({ x: px, y: py, v: rates[i] });
+    if (firstPoint) { ctx.moveTo(px, py); firstPoint = false; }
+    else ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+
+  // rate dots
+  linePts.forEach(p => {
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(p.x, p.y, 6, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#f59e0b'; ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI * 2); ctx.fill();
+  });
+
+  // -- legend --
+  const legendY = H - 10;
+  const legendItems = [
+    { color: '#2c3e50', label: '资产人数' },
+    { color: '#e74c3c', label: '无效' },
+    { color: '#3b82f6', label: '50% 生产' },
+    { color: '#f59e0b', label: '综合无效率', line: true },
+  ];
+  let lx = pad.left;
+  ctx.font = '11px sans-serif';
+  legendItems.forEach(item => {
+    const labelW = ctx.measureText(item.label).width + 18;
+    const y = legendY;
+    if (item.line) {
+      ctx.strokeStyle = item.color; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(lx, y); ctx.lineTo(lx + 12, y); ctx.stroke();
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(lx + 6, y, 3, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = item.color; ctx.beginPath(); ctx.arc(lx + 6, y, 2, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#6b7c93'; ctx.fillText(item.label, lx + 16, y + 4);
+    } else {
+      ctx.fillStyle = item.color;
+      roundRect(ctx, lx, y - 5, 10, 10, 2); ctx.fill();
+      ctx.fillStyle = '#6b7c93'; ctx.fillText(item.label, lx + 14, y + 4);
+    }
+    lx += labelW;
+  });
+
+  // -- tooltip --
+  const tooltip = document.getElementById('mainTooltip') || createTooltip('mainTooltip');
+  canvas.onmousemove = function(e) {
+    const mx = e.offsetX, my = e.offsetY;
+    let found = null;
+
+    // check bars
+    for (const r of barRects) {
+      if (mx >= r.x && mx <= r.x + r.w && my >= r.y && my <= r.y + r.h) {
+        found = { text: labels[r.i] + ' · ' + r.set.label + ': ' + r.v + ' 人', x: r.x + r.w / 2, y: r.y };
+        break;
+      }
+    }
+    // check line points
+    if (!found) {
+      for (const p of linePts) {
+        if (Math.abs(mx - p.x) < 12 && Math.abs(my - p.y) < 12) {
+          found = { text: labels[linePts.indexOf(p)] + ' · 综合无效率: ' + p.v.toFixed(1) + '%', x: p.x, y: p.y };
+          break;
+        }
+      }
+    }
+
+    if (found) {
+      tooltip.style.display = 'block';
+      tooltip.style.left = (found.x + 10) + 'px';
+      tooltip.style.top = (found.y - 40) + 'px';
+      tooltip.textContent = found.text;
+    } else {
+      tooltip.style.display = 'none';
+    }
+  };
+  canvas.onmouseleave = function() { tooltip.style.display = 'none'; };
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.arcTo(x + w, y, x + w, y + r, r);
+  ctx.lineTo(x + w, y + h);
+  ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+  ctx.lineTo(x + r, y + h);
+  ctx.arcTo(x, y + h, x, y + h - r, r);
+  ctx.lineTo(x, y + r);
+  ctx.arcTo(x, y, x + r, y, r);
+  ctx.closePath();
+}
+
+function createTooltip(id) {
+  const el = document.createElement('div');
+  el.id = id;
+  el.style.cssText = 'position:absolute;display:none;background:#2c3e50;color:#fff;padding:6px 10px;border-radius:6px;font-size:12px;pointer-events:none;z-index:100;white-space:nowrap;';
+  document.getElementById('mainChart').parentElement.style.position = 'relative';
+  document.getElementById('mainChart').parentElement.appendChild(el);
+  return el;
+}
+
+// ====== SUMMARY BAR CHARTS ======
+function drawHBarChart(canvasId, entries, maxDays, colorFn) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const W = rect.width;
+  const N = entries.length;
+  const barH = 22;
+  const H = Math.max(100, N * (barH + 6) + 40);
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const pad = { left: 80, right: 20, top: 10, bottom: 30 };
+  const cw = W - pad.left - pad.right;
+
+  ctx.clearRect(0, 0, W, H);
+
+  // x-axis tick marks
+  ctx.strokeStyle = '#f1f3f6'; ctx.lineWidth = 1;
+  ctx.fillStyle = '#6b7c93'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
+  for (let v = 0; v <= maxDays; v += 1) {
+    const x = pad.left + cw * v / maxDays;
+    ctx.beginPath(); ctx.moveTo(x, pad.top); ctx.lineTo(x, H - pad.bottom); ctx.stroke();
+    ctx.fillText(v, x, H - pad.bottom + 14);
+  }
+
+  entries.forEach((e, i) => {
+    const y = pad.top + i * (barH + 6);
+    const bw = cw * e[1] / maxDays;
+    const color = colorFn(e[1]);
+    ctx.fillStyle = color;
+    roundRect(ctx, pad.left, y, bw, barH, 4); ctx.fill();
+
+    // name label
+    ctx.fillStyle = '#2c3e50'; ctx.font = '12px sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText(e[0], pad.left - 8, y + barH / 2 + 4);
+
+    // count label
+    ctx.fillStyle = '#6b7c93'; ctx.font = '11px sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText(e[1] + '天', pad.left + bw + 6, y + barH / 2 + 4);
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadData();
+  renderAll();
+  window.addEventListener('resize', () => { renderChart(); });
+});
+</script>
+</body>
+</html>
