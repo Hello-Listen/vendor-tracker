@@ -732,30 +732,35 @@ function renderChart() {
   });
 
   // -- legend --
-  const legendY = H - 14;
+  const legendY = H - 18;
   const legendItems = [
     { color: '#2c3e50', label: '资产人数' },
     { color: '#e74c3c', label: '无效' },
     { color: '#3b82f6', label: '50% 生产' },
     { color: '#f59e0b', label: '综合无效率', line: true },
   ];
+  // 用字符数估算宽度，避免 measureText 对中文的宽度估算偏差
+  ctx.font = '12px "PingFang SC", "Microsoft YaHei", sans-serif';
+  ctx.textBaseline = 'middle';
   let lx = pad.left;
-  ctx.font = '11px sans-serif';
   legendItems.forEach(item => {
-    const labelW = ctx.measureText(item.label).width + 30;
+    const textW = item.label.length * 13;  // 中文 13px/字 估算
+    const itemW = 16 + 8 + textW;          // 图标 16 + 间距 8 + 文字
     const y = legendY;
     if (item.line) {
       ctx.strokeStyle = item.color; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(lx, y); ctx.lineTo(lx + 14, y); ctx.stroke();
-      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(lx + 7, y, 3.5, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = item.color; ctx.beginPath(); ctx.arc(lx + 7, y, 2, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#6b7c93'; ctx.fillText(item.label, lx + 20, y + 4);
+      ctx.beginPath(); ctx.moveTo(lx, y); ctx.lineTo(lx + 16, y); ctx.stroke();
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(lx + 8, y, 4, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = item.color; ctx.beginPath(); ctx.arc(lx + 8, y, 2.5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#6b7c93';
+      ctx.fillText(item.label, lx + 24, y);
     } else {
       ctx.fillStyle = item.color;
-      roundRect(ctx, lx, y - 4, 8, 8, 2); ctx.fill();
-      ctx.fillStyle = '#6b7c93'; ctx.fillText(item.label, lx + 14, y + 4);
+      roundRect(ctx, lx, y - 5, 12, 10, 2); ctx.fill();
+      ctx.fillStyle = '#6b7c93';
+      ctx.fillText(item.label, lx + 18, y);
     }
-    lx += labelW;
+    lx += itemW + 24;  // 项间距 24px
   });
 
   // -- tooltip --
