@@ -432,10 +432,10 @@ body {
           <th>项目人数</th>
           <th>资产</th>
           <th>正常</th>
-          <th style="color:#dc2626;">无效</th>
-          <th style="color:#3b82f6;">50%</th>
+          <th style="color:#dc2626;">严重</th>
+          <th style="color:#3b82f6;">警告</th>
           <th>请假</th>
-          <th>无效率</th>
+          <th>严重率</th>
         </tr>
       </thead>
       <tbody id="tableBody"></tbody>
@@ -445,7 +445,7 @@ body {
   <!-- Invalid Names -->
   <div class="section" id="namesBox">
     <div class="section-header">
-      <span class="section-title">每日无效 / 50% 人员名单</span>
+      <span class="section-title">每日严重 / 警告 人员名单</span>
     </div>
     <div id="namesContent"></div>
   </div>
@@ -511,17 +511,17 @@ function renderCards() {
       <div class="card-sub">项目 ${latest.total} 人 / 资产 ${latest.asset} 人</div>
     </div>
     <div class="card">
-      <div class="card-label">昨日无效</div>
+      <div class="card-label">昨日严重</div>
       <div class="card-value red">${latest.invalid ?? '-'}</div>
-      <div class="card-sub">无效率 ${latest.asset ? (latest.invalid/latest.asset*100).toFixed(1) : '-'}%</div>
+      <div class="card-sub">严重率 ${latest.asset ? (latest.invalid/latest.asset*100).toFixed(1) : '-'}%</div>
     </div>
     <div class="card">
-      <div class="card-label">累计无效（${wd.length} 天）</div>
+      <div class="card-label">累计严重（${wd.length} 天）</div>
       <div class="card-value blue">${totalInvalid}</div>
-      <div class="card-sub">综合无效率 ${inefficiencyRate}%</div>
+      <div class="card-sub">综合严重率 ${inefficiencyRate}%</div>
     </div>
     <div class="card">
-      <div class="card-label">50% 生产 / 请假</div>
+      <div class="card-label">警告 / 请假</div>
       <div class="card-value green">${totalHalf}</div>
       <div class="card-sub">请假累计 ${totalLeave} 人次</div>
     </div>
@@ -593,13 +593,13 @@ function renderNames() {
     <div class="name-date-card">
       <div class="name-date-label">${g.date.slice(5)}</div>
       <div class="name-tags">
-        <span class="name-tags-label">无效 ${g.invalidNames.length}人</span>
+        <span class="name-tags-label">严重 ${g.invalidNames.length}人</span>
         ${g.invalidNames.length > 0
           ? g.invalidNames.map(n => `<span class="name-tag red">${n}</span>`).join('')
           : '<span class="name-tag empty">无</span>'}
       </div>
       <div class="name-tags">
-        <span class="name-tags-label">50% ${g.halfNames.length}人</span>
+        <span class="name-tags-label">警告 ${g.halfNames.length}人</span>
         ${g.halfNames.length > 0
           ? g.halfNames.map(n => `<span class="name-tag blue">${n}</span>`).join('')
           : '<span class="name-tag empty">无</span>'}
@@ -677,7 +677,7 @@ function renderChart() {
     const y = cyR(v);
     ctx.fillText(v + '%', W - pad.right + 6, y + 3);
   }
-  ctx.fillText('无效率', W - pad.right + 20, pad.top - 6);
+  ctx.fillText('严重率', W - pad.right + 20, pad.top - 6);
 
   // X labels
   ctx.textAlign = 'center';
@@ -691,8 +691,8 @@ function renderChart() {
   const barW = groupW / 3;
   const barSets = [
     { data: assets, color: '#2c3e50', label: '资产人数' },
-    { data: invalids, color: '#e74c3c', label: '无效' },
-    { data: halfs, color: '#3b82f6', label: '50% 生产' },
+    { data: invalids, color: '#e74c3c', label: '严重' },
+    { data: halfs, color: '#3b82f6', label: '警告' },
   ];
 
   // store bar rects for tooltip
@@ -739,9 +739,9 @@ function renderChart() {
   const legendY = H - 18;
   const legendItems = [
     { color: '#2c3e50', label: '资产人数' },
-    { color: '#e74c3c', label: '无效' },
-    { color: '#3b82f6', label: '50% 生产' },
-    { color: '#f59e0b', label: '综合无效率', line: true },
+    { color: '#e74c3c', label: '严重' },
+    { color: '#3b82f6', label: '警告' },
+    { color: '#f59e0b', label: '综合严重率', line: true },
   ];
   // 用字符数估算宽度，避免 measureText 对中文的宽度估算偏差
   ctx.font = '12px "PingFang SC", "Microsoft YaHei", sans-serif';
@@ -784,7 +784,7 @@ function renderChart() {
     if (!found) {
       for (const p of linePts) {
         if (Math.abs(mx - p.x) < 12 && Math.abs(my - p.y) < 12) {
-          found = { text: labels[linePts.indexOf(p)] + ' · 综合无效率: ' + p.v.toFixed(1) + '%', x: p.x, y: p.y };
+          found = { text: labels[linePts.indexOf(p)] + ' · 综合严重率: ' + p.v.toFixed(1) + '%', x: p.x, y: p.y };
           break;
         }
       }
