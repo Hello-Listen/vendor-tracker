@@ -196,6 +196,43 @@ body {
   vertical-align: middle;
 }
 
+/* ===== Month group in table ===== */
+.data-table .month-group td {
+  padding: 14px 12px;
+  background: #f0f4f8;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text-primary);
+  border-bottom: 2px solid var(--border);
+  cursor: pointer;
+  user-select: none;
+}
+.data-table .month-group td:hover { background: #e8ecf2; }
+.data-table .month-group .month-arrow {
+  display: inline-block;
+  transition: transform 0.2s;
+  margin-right: 6px;
+  font-size: 10px;
+}
+.data-table .month-group.collapsed .month-arrow { transform: rotate(-90deg); }
+.data-table .month-group .month-badge {
+  display: inline-block;
+  background: var(--green);
+  color: #fff;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  margin-right: 10px;
+}
+.data-table .month-group .month-stat {
+  font-weight: 400;
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-left: 12px;
+}
+.data-table tr.month-row { display: table-row; }
+.data-table tr.month-row.hidden { display: none; }
+
 /* ===== Names Section ===== */
 .name-summary { margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px dashed var(--border); }
 .name-summary-title {
@@ -532,34 +569,75 @@ function renderCards() {
 }
 
 function renderTable() {
-  const rows = data.map(d => {
-    if (d.type === 'rest') {
-      return `<tr>
-        <td>${d.date.slice(5)}</td>
-        <td colspan="7" class="val-rest">休息日</td>
-      </tr>`;
-    }
-    const rawRate = d.asset ? (d.invalid / d.asset * 100) : null;
-    const rate = rawRate !== null ? rawRate.toFixed(1) : '-';
-    let rateClass = '';
-    if (rawRate !== null) {
-      if (rawRate >= 30) rateClass = 'high';
-      else if (rawRate >= 10) rateClass = 'mid';
-      else rateClass = 'low';
-    }
-    const isLatest = d.date === data.filter(e => e.type === 'working').pop()?.date;
-    return `<tr>
-      <td>${isLatest ? '<span class="latest-dot"></span>' : ''}${d.date.slice(5)}</td>
-      <td>${d.total ?? '?'}</td>
-      <td>${d.asset ?? '?'}</td>
-      <td>${d.normal ?? '?'}</td>
-      <td class="val-red">${d.invalid ?? '-'}</td>
-      <td class="val-blue">${d.half ?? '-'}</td>
-      <td>${d.leave ?? '-'}</td>
-      <td>${rate === '-' ? '-' : `<span class="rate-badge ${rateClass}">${rate}%</span>`}</td>
-    </tr>`;
+  // group data by month
+  const groups = {};
+  data.forEach(d => {
+    const m = d.date.slice(0, 7); // '2026-07'
+    if (!groups[m]) groups[m] = [];
+    groups[m].push(d);
   });
-  document.getElementById('tableBody').innerHTML = rows.join('');
+
+  const monthNames = { '07': '7月', '08': '8月', '09': '9月', '10': '10月', '11': '11月', '12': '12月' };
+  const latestDate = data.filter(e => e.type === 'working').pop()?.date;
+  let html = '', gid = 0;
+
+  Object.keys(groups).sort().forEach(month => {
+    const items = groups[month];
+    const workingDays = items.filter(d => d.type === 'working');
+    const wdCount = workingDays.length;
+    const totalInvalid = workingDays.reduce((s, d) => s + d.invalid, 0);
+    const totalAsset = workingDays.reduce((s, d) => s + d.asset, 0);
+    const monthRate = totalAsset > 0 ? (totalInvalid / totalAsset * 100).toFixed(1) : '-';
+    const y = month.slice(0, 4), m = month.slice(5);
+    const label = monthNames[m] || m + '月';
+
+    // month header row (collapsible)
+    html += `<tr class="month-group" data-gid="mg${gid}" onclick="toggleMonth('mg${gid}')">
+      <td colspan="8"><span class="month-arrow">▼</span><span class="month-badge">${label}</span>${wdCount} 个工作日<span class="month-stat">累计严重 ${totalInvalid} 人 · 平均严重率 ${monthRate}%</span></td>
+    </tr>`;
+
+    items.forEach(d => {
+      if (d.type === 'rest') {
+        html += `<tr class="month-row mg${gid}">
+          <td>${d.date.slice(5)}</td>
+          <td colspan="7" class="val-rest">休息日</td>
+        </tr>`;
+        return;
+      }
+      const rawRate = d.asset ? (d.invalid / d.asset * 100) : null;
+      const rate = rawRate !== null ? rawRate.toFixed(1) : '-';
+      let rateClass = '';
+      if (rawRate !== null) {
+        if (rawRate >= 30) rateClass = 'high';
+        else if (rawRate >= 10) rateClass = 'mid';
+        else rateClass = 'low';
+      }
+      const isLatest = d.date === latestDate;
+      html += `<tr class="month-row mg${gid}">
+        <td>${isLatest ? '<span class="latest-dot"></span>' : ''}${d.date.slice(5)}</td>
+        <td>${d.total ?? '?'}</td>
+        <td>${d.asset ?? '?'}</td>
+        <td>${d.normal ?? '?'}</td>
+        <td class="val-red">${d.invalid ?? '-'}</td>
+        <td class="val-blue">${d.half ?? '-'}</td>
+        <td>${d.leave ?? '-'}</td>
+        <td>${rate === '-' ? '-' : `<span class="rate-badge ${rateClass}">${rate}%</span>`}</td>
+      </tr>`;
+    });
+    gid++;
+  });
+
+  document.getElementById('tableBody').innerHTML = html;
+}
+
+function toggleMonth(gid) {
+  const header = document.querySelector(`.month-group[data-gid="${gid}"]`);
+  const rows = document.querySelectorAll('.month-row.' + gid);
+  if (rows.length === 0) return;
+  const hidden = rows[0].classList.contains('hidden');
+  rows.forEach(r => { if (hidden) r.classList.remove('hidden'); else r.classList.add('hidden'); });
+  if (hidden) header.classList.remove('collapsed');
+  else header.classList.add('collapsed');
 }
 
 function renderNames() {
