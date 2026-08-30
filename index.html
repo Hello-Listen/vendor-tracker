@@ -528,6 +528,7 @@ const defaultData = [
   { date:'2026-08-21', total:48, asset:42, normal:31, invalid:8,  invalidNames:['马宇飞','田净祎','王祥迪','龚泽江','杨昊烨','李剑','徐镇创','刘兆城'], half:3, halfNames:['张思雨','袁振荣','潘斯欣'], leave:3, type:'working' },
   { date:'2026-08-22', total:null, asset:null, normal:null, invalid:null, invalidNames:[], half:null, halfNames:[], leave:null, type:'rest' },
   { date:'2026-08-23', total:null, asset:null, normal:null, invalid:null, invalidNames:[], half:null, halfNames:[], leave:null, type:'rest' },
+  { date:'2026-08-24', total:null, asset:null, normal:null, invalid:null, invalidNames:[], half:null, halfNames:[], leave:null, type:'skip' },
   { date:'2026-08-25', total:48, asset:42, normal:20, invalid:13, invalidNames:['王凯文','王琪','田净祎','龚泽江','张思雨','陈咏恩','潘斯欣','杨昊烨','李剑','袁振荣','解皓臣','王若宇','陶莹莹'], half:9, halfNames:['马宇飞','冯诗樱','朱铭涛','陈普光','朱良','虞南山','薛妍','陆侃歆','武佳琦'], leave:1, type:'working' },
 ];
 
@@ -620,6 +621,13 @@ function renderTable() {
         html += `<tr class="month-row mg${gid}">
           <td>${d.date.slice(5)}</td>
           <td colspan="7" class="val-rest">休息日</td>
+        </tr>`;
+        return;
+      }
+      if (d.type === 'skip') {
+        html += `<tr class="month-row mg${gid}">
+          <td>${d.date.slice(5)}</td>
+          <td colspan="7" class="val-rest">未整理</td>
         </tr>`;
         return;
       }
